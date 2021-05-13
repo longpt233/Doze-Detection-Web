@@ -6,3 +6,7 @@ midterm deep learning application
 - conda activate env (optional)
 - pip install -r requirements.txt
 - python app.py
+
+
+# license
+- face-lanmark-68
