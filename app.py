@@ -1,31 +1,30 @@
 from flask import Flask, render_template, Response
 import cv2
 import numpy as np
-import dlib 
+import dlib
 from imutils import face_utils
 
 app = Flask(__name__)
 
 
-
-
-
 # Ham tinh khoang cach giua 2 diem
 def e_dist(pA, pB):
-	return np.linalg.norm(pA - pB)
+    return np.linalg.norm(pA - pB)
+
 
 def eye_ratio(eye):
-	# Tinh toan khoang cach theo chieu doc giua mi tren va mi duoi
-	d_V1 = e_dist(eye[1], eye[5])
-	d_V2 = e_dist(eye[2], eye[4])
+    # Tinh toan khoang cach theo chieu doc giua mi tren va mi duoi
+    d_V1 = e_dist(eye[1], eye[5])
+    d_V2 = e_dist(eye[2], eye[4])
 
-	# Tinh toan khoang cach theo chieu ngang giua 2 duoi mat
-	d_H = e_dist(eye[0], eye[3])
+    # Tinh toan khoang cach theo chieu ngang giua 2 duoi mat
+    d_H = e_dist(eye[0], eye[3])
 
-	# Tinh ty le giua chieu doc va chieu ngang
-	eye_ratio_val = (d_V1 + d_V2) / (2.0 * d_H)
+    # Tinh ty le giua chieu doc va chieu ngang
+    eye_ratio_val = (d_V1 + d_V2) / (2.0 * d_H)
 
-	return eye_ratio_val
+    return eye_ratio_val
+
 
 # Dinh nghia muc threshold ty le giua doc/ngang. Neu duoi muc nay la ngu gat
 eye_ratio_threshold = 0.25
@@ -45,7 +44,9 @@ landmark_detect = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 # Lay danh sach cac cum diem landmark cho 2 mat
 (left_eye_start, left_eye_end) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
-(right_eye_start, right_eye_end) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+(right_eye_start,
+ right_eye_end) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+
 
 @app.route('/')
 def index():
@@ -62,8 +63,6 @@ def gen():
             print("Error: failed to capture image")
             break
 
-        
-
         # Resize de tang toc do xu ly
         # frame = imutils.resize(frame, width=450)
 
@@ -71,14 +70,15 @@ def gen():
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # Detect cac mat trong anh
-        faces = face_detect.detectMultiScale(gray, scaleFactor=1.1,		minNeighbors=5, minSize=(100, 100),		flags=cv2.CASCADE_SCALE_IMAGE)
+        faces = face_detect.detectMultiScale(gray, scaleFactor=1.1,		minNeighbors=5, minSize=(
+            100, 100),		flags=cv2.CASCADE_SCALE_IMAGE)
 
         # Duyet qua cac mat
         for (x, y, w, h) in faces:
 
             # Tao mot hinh chu nhat quanh khuon mat
             rect = dlib.rectangle(int(x), int(y), int(x + w),
-                int(y + h))
+                                  int(y + h))
 
             # Nhan dien cac diem landmark
             landmark = landmark_detect(gray, rect)
@@ -110,14 +110,14 @@ def gen():
                         alarmed = True
                         # Duong dan den file wav
 
-
                         # Tien hanh phat am thanh trong 1 luong rieng
                         #t = Thread(target=play_sound,args=(wav_path,))
                         #t.deamon = True
-                        #t.start()
+                        # t.start()
 
                     # Ve dong chu canh bao
-                    cv2.putText(frame, "BUON NGU THI DI NGU DI ONG OI!!!", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    cv2.putText(frame, "BUON NGU THI DI NGU DI ONG OI!!!",
+                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
             # Neu khong nham mat thi
             else:
@@ -127,7 +127,8 @@ def gen():
                 alarmed = False
 
                 # Hien thi gia tri eye ratio trung binh
-                cv2.putText(frame, "EYE AVG RATIO: {:.3f}".format(eye_avg_ratio), (10, 30),	cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+                cv2.putText(frame, "EYE AVG RATIO: {:.3f}".format(
+                    eye_avg_ratio), (10, 30),	cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
 
         # Hien thi len man hinh
         # cv2.imshow("Camera", frame)
