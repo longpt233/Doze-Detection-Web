@@ -1,0 +1,7 @@
+cmake
+dlib
+scikit-image
+imutils
+scikit-learn==0.20.04
+opencv-python
+scipy
