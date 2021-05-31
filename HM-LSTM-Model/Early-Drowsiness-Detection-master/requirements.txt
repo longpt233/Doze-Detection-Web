@@ -5,3 +5,5 @@ imutils
 scikit-learn==0.20.04
 opencv-python
 scipy
+numpy ==1.9
+tensorflow== 1.15

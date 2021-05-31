@@ -500,10 +500,30 @@ for i in range(5): #Cross validation but recommended to run each fold a few time
     print(i)
     print('######################')
     start_indices=np.asarray(start_indices)
-    x,loss,accuracy,loss_Test,accuracy_Test,acc_per_Vid=Train(total_input=Blinks,total_labels=Labels,TestB=BlinksTest,TestL=LabelsTest,
-                    output_size=1,feature_size=4,batch_size=64,num_epochs=80,Pre_fc1_size=32,Post_fc1_size_per_layer=16,
-                    embb_size=16,embb_size2=16,Post_fc2_size=8,hstate_size=[32,32,32,32],num_layers=4,step_size=30,drop_out_p=1.0,
-                                                  lr=0.000053,th=1.253,start_i=start_indices,load=load,fold_num=ii)
+    x,loss,accuracy,loss_Test,accuracy_Test,acc_per_Vid=Train(
+            total_input=Blinks, \
+            total_labels=Labels,\
+            TestB=BlinksTest,\
+            TestL=LabelsTest,\
+            output_size=1,\
+            feature_size=4,\
+            batch_size=64,\
+            num_epochs=80,\
+            Pre_fc1_size=32,\
+            Post_fc1_size_per_layer=16,\
+            embb_size=16,\
+            embb_size2=16,\
+            Post_fc2_size=8,\
+            hstate_size=[32,32,32,32],\
+            num_layers=4,\
+            step_size=30,\
+            drop_out_p=1.0,\
+            lr=0.000053,\
+            th=1.253,\
+            start_i=start_indices,\
+            load=load,\
+            fold_num=ii
+    )        
 
 
     if load==False:

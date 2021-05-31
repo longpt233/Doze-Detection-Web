@@ -4,6 +4,8 @@ import tensorflow as tf
 import collections
 
 
+
+
 HMLSTMStateTuple=collections.namedtuple('HMLSTMStateTuple',['c','h','z'])
 
 class HMSLSTM_cell(core_rnn_cell.RNNCell):

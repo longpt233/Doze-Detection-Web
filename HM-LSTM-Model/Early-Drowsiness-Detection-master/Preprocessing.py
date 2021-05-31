@@ -219,6 +219,7 @@ def Preprocess(path1,window_size,stride,test_fold):
 
                     semi_blink_unrolled = unroll_in_time(normalized_blinks, window_size, stride)
                     semi_labels = 5* np.ones([len(semi_blink_unrolled), 1])
+                    # 
 
                 if txt_file == 'sleepy.txt':
                     blinksTXT = path1 + '/' + folder + '/' + txt_file

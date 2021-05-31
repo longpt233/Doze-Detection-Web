@@ -20,6 +20,8 @@ from scipy.ndimage.interpolation import shift
 import pickle
 from queue import Queue
 
+import time
+
 # import the necessary packages
 
 import numpy as np
@@ -36,15 +38,8 @@ def adjust_gamma(image, gamma=1.0):
     # apply gamma correction using the lookup table
     return cv2.LUT(image, table)
 
-#
-
-
-#
 
 def blink_detector(output_file):
-
-
-
     Q = Queue(maxsize=7)   
     MIN_AMPLITUDE=0.04
     MOUTH_AR_THRESH=0.35
@@ -70,13 +65,8 @@ def blink_detector(output_file):
 
 
     def eye_aspect_ratio(eye):
-        # compute the euclidean distances between the two sets of
-        # vertical eye landmarks (x, y)-coordinates
         A = dist.euclidean(eye[1], eye[5])
         B = dist.euclidean(eye[2], eye[4])
-
-        # compute the euclidean distance between the horizontal
-        # eye landmark (x, y)-coordinates
         C = dist.euclidean(eye[0], eye[3])
 
         if C<0.1:           #practical finetuning due to possible numerical issue as a result of optical flow
@@ -194,17 +184,12 @@ def blink_detector(output_file):
             if Counter4blinks>0:
                 skip = False
             if Counter4blinks==0:
-                Current_Blink.startEAR=EAR    #EAR_series[6] is the EAR for the frame of interest(the middle one)
+                Current_Blink.startEAR=EAR    #EAR_series_13[6] is the EAR for the frame of interest(the middle one)
                 Current_Blink.start=reference_frame-6   #reference-6 points to the frame of interest which will be the 'start' of the blink
             Counter4blinks += 1
             if Current_Blink.peakEAR>=EAR:    #deciding the min point of the EAR signal
                 Current_Blink.peakEAR =EAR
                 Current_Blink.peak=reference_frame-6
-
-
-
-
-
         # otherwise, the eyes are open in this frame
         else:
 
@@ -221,7 +206,6 @@ def blink_detector(output_file):
                             #####THE ULTIMATE BLINK Check
 
                             Last_Blink.values=signal.convolve1d(Last_Blink.values, [1/3.0, 1/3.0,1/3.0],mode='nearest')
-                            # Last_Blink.values=signal.median_filter(Last_Blink.values, 3, mode='reflect')   # smoothing the signal
                             [MISSED_BLINKS,retrieved_blinks]=Ultimate_Blink_Check()
                             #####
                             TOTAL_BLINKS =TOTAL_BLINKS+len(retrieved_blinks)  # Finally, approving/counting the previous blink candidate
@@ -299,6 +283,7 @@ def blink_detector(output_file):
 
     print("[INFO] loading facial landmark predictor...")
     detector = dlib.get_frontal_face_detector()
+    # face_detect = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
     #Load the Facial Landmark Detector
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     #Load the Blink Detector
@@ -310,31 +295,33 @@ def blink_detector(output_file):
     (mStart, mEnd) = face_utils.FACIAL_LANDMARKS_IDXS["mouth"]
     print("[INFO] starting video stream thread...")
     
-    EAR_series=np.zeros([13])
+    EAR_series_13=np.zeros([13])
     Frame_series=np.linspace(1,13,13)
     reference_frame=0
     First_frame=True
-    top = tk.Tk()
-    frame1 = Frame(top)
-    frame1.grid(row=0, column=0)
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    plot_frame =FigureCanvasTkAgg(fig, master=frame1)
-    plot_frame.get_tk_widget().pack(side=tk.BOTTOM, expand=True)
-    plt.ylim([0.0, 0.5])
-    line, = ax.plot(Frame_series,EAR_series)
-    plot_frame.draw()
+
+    # subplot 
+    # top = tk.Tk()
+    # frame1 = Frame(top)
+    # frame1.grid(row=0, column=0)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(221)
+    # plot_frame =FigureCanvasTkAgg(fig, master=frame1)
+    # plot_frame.get_tk_widget().pack(side=tk.BOTTOM, expand=True)
+    # plt.ylim([0.0, 0.5])
+    # line, = ax.plot(Frame_series,EAR_series_13)
+    # plot_frame.draw()
 
     # loop over frames from the video stream
 
 
     stream = cv2.VideoCapture(0)
-    number_of_frames=0
+    number_of_frames_person_detected=0
     while True:
         (grabbed, frame) = stream.read()    
         if not grabbed:
             print('not grabbed')
-            print(number_of_frames)
+            print(number_of_frames_person_detected)
             break
         frame = imutils.resize(frame, width=450)
         
@@ -346,7 +333,7 @@ def blink_detector(output_file):
          # detect faces in the grayscale frame
         rects = detector(gray, 0)
         if (np.size(rects) != 0):
-            number_of_frames = number_of_frames + 1  # we only consider frames that face is detected
+            number_of_frames_person_detected = number_of_frames_person_detected + 1  # we only consider frames that face is detected
             # determine the facial landmarks for the face region, then
             # convert the facial landmark (x, y)-coordinates to a NumPy
             # array
@@ -382,7 +369,7 @@ def blink_detector(output_file):
 
             # average the eye aspect ratio together for both eyes
             ear = (leftEAR + rightEAR) / 2.0
-            EAR_series = shift(EAR_series, -1, cval=ear)
+            EAR_series_13 = shift(EAR_series_13, -1, cval=ear)
 
             # compute the convex hull for the left and right eye, then
             # visualize each of the eyes
@@ -397,10 +384,11 @@ def blink_detector(output_file):
             # dam bao load dc 15 diem gom 7*7 cong 7 pupplementary Material : Blink Retrieval Algorithm  phan cuoi bai dich
             if Q.full() and (reference_frame>15):  #to make sure the frame of interest for the EAR vector is int the mid
 # if              
-                IF_Closed_Eyes = loaded_svm.predict(EAR_series.reshape(1,-1))
+                
+                IF_Closed_Eyes = loaded_svm.predict(EAR_series_13.reshape(1,-1))
                 if Counter4blinks==0:
                     Current_Blink = Blink()
-                retrieved_blinks, TOTAL_BLINKS, Counter4blinks, BLINK_READY, skip = Blink_Tracker(EAR_series[6],
+                retrieved_blinks, TOTAL_BLINKS, Counter4blinks, BLINK_READY, skip = Blink_Tracker(EAR_series_13[6],
                                                                                                       IF_Closed_Eyes,
                                                                                                       Counter4blinks,
                                                                                                       TOTAL_BLINKS, skip)
@@ -408,7 +396,7 @@ def blink_detector(output_file):
                     reference_frame=20   #initialize to a random number to avoid overflow in large numbers
                     skip = True
                     #####
-                    BLINK_FRAME_FREQ = TOTAL_BLINKS / number_of_frames
+                    BLINK_FRAME_FREQ = TOTAL_BLINKS / number_of_frames_person_detected
                     for detected_blink in retrieved_blinks:
                         print(detected_blink.amplitude, Last_Blink.amplitude)
                         print(detected_blink.duration, detected_blink.velocity)
@@ -421,16 +409,14 @@ def blink_detector(output_file):
                     Last_Blink.end = -10 # re initialization
                     #####
 
-                line.set_ydata(EAR_series)
-                plot_frame.draw()
+                # line.set_ydata(EAR_series_13)
+                # plot_frame.draw()
                 frameMinus7=Q.get()
                 cv2.imshow("Frame", frameMinus7)
             elif Q.full():         #just to make way for the new input of the Q when the Q is full
                 _ =  Q.get()
 
             key = cv2.waitKey(1) & 0xFF
-
-            # if the `q` key was pressed, break from the loop
             if key != 0xFF:
                 break
         #Does not detect any face
@@ -455,8 +441,8 @@ def blink_detector(output_file):
                 rightEAR = eye_aspect_ratio(p2)
 
                 ear = (leftEAR + rightEAR) / 2.0
-                EAR_series = shift(EAR_series, -1, cval=ear)
-                #EAR_series[reference_frame] = ear
+                EAR_series_13 = shift(EAR_series_13, -1, cval=ear)
+                #EAR_series_13[reference_frame] = ear
                 leftEyeHull = cv2.convexHull(p1)
                 rightEyeHull = cv2.convexHull(p2)
                 cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
@@ -464,24 +450,14 @@ def blink_detector(output_file):
                 old_gray = gray.copy()
                 leftEye = p1
                 rightEye = p2
-                ############HANDLING THE EMERGENCY SITATION################
-                ###########################################################
-                ###########################################################
                 COUNTER = CheckEarClose(ear, COUNTER)
-                ############HANDLING THE EMERGENCY SITATION################
-                ###########################################################
-                ###########################################################
-
-
-            ###################Using Optical Flow############
-            ###################                  ############
 
             if Q.full() and (reference_frame>15):
-                EAR_table = EAR_series
-                IF_Closed_Eyes = loaded_svm.predict(EAR_series.reshape(1,-1))
+                EAR_table = EAR_series_13
+                IF_Closed_Eyes = loaded_svm.predict(EAR_series_13.reshape(1,-1))
                 if Counter4blinks==0:
                     Current_Blink = Blink()
-                    retrieved_blinks, TOTAL_BLINKS, Counter4blinks, BLINK_READY, skip = Blink_Tracker(EAR_series[6],
+                    retrieved_blinks, TOTAL_BLINKS, Counter4blinks, BLINK_READY, skip = Blink_Tracker(EAR_series_13[6],
                                                                                                       IF_Closed_Eyes,
                                                                                                       Counter4blinks,
                                                                                                       TOTAL_BLINKS, skip)
@@ -489,7 +465,7 @@ def blink_detector(output_file):
                     reference_frame=20   #initialize to a random number to avoid overflow in large numbers
                     skip = True
                     #####
-                    BLINK_FRAME_FREQ = TOTAL_BLINKS / number_of_frames
+                    BLINK_FRAME_FREQ = TOTAL_BLINKS / number_of_frames_person_detected
                     for detected_blink in retrieved_blinks:
                         print(detected_blink.amplitude, Last_Blink.amplitude)
                         print(detected_blink.duration, Last_Blink.duration)
@@ -503,8 +479,8 @@ def blink_detector(output_file):
 
                     #####
 
-                line.set_ydata(EAR_series)
-                plot_frame.draw()
+                # line.set_ydata(EAR_series_13)
+                # plot_frame.draw()
                 frameMinus7=Q.get()
                 cv2.imshow("Frame", frameMinus7)
             elif Q.full():
